@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Scanner Log Parser</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="upload-container">
+        <h2>Car Scanner Log Parser</h2>
+        <input type="file" id="logFile" accept=".txt,.log">
+        <button onclick="handleFileUpload()">Parse Log</button>
+        <div id="loading" class="loading">Parsing log file...</div>
+        <div id="error" class="error"></div>
+        <div class="expression-container" style="margin-top: 20px;">
+            <div style="margin-bottom: 10px;">
+                <label for="expression">Expression:</label>
+                <input type="text" id="expression" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                <button id="evaluateBtn" style="margin-top: 10px; margin-bottom: 10px;">Evaluate</button>
+            </div>
+            <div>
+                <label for="result">Result:</label>
+                <input type="text" id="result" readonly style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px; background-color: #f8f8f8;">
+            </div>
+        </div>
+    </div>
+
+    <div class="results-container">
+        <div class="result-box">
+            <h3>Second-to-Last PID Request</h3>
+            <pre><code id="lastPID"></code></pre>
+            <div id="byteDisplay" class="byte-display"></div>
+        </div>
+        <div class="result-box">
+            <h3>Commands (AT/ST/VT)</h3>
+            <pre><code id="commands"></code></pre>
+        </div>
+        <div class="result-box">
+            <h3>All PID Responses</h3>
+            <pre><code id="allPIDs"></code></pre>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
