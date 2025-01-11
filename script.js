@@ -276,9 +276,10 @@ class ELM327Parser {
     
         // Continue with existing parsing logic using relevantLines instead of lines
         const pidRequestIndices = [];
-        for (let i = 0; i < relevantLines.length; i++) {
+        for (let i = 0; i < relevantLines.length - 1; i++) {
             const line = relevantLines[i].trim();
-            if (this.isPIDRequest(line)) {
+            const first_response_line = relevantLines[i+1].trim();
+            if (this.isPIDRequest(line) && this.isHexNumber(first_response_line)) {
                 pidRequestIndices.push(i);
             }
         }
