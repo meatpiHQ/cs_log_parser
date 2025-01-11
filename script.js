@@ -353,10 +353,8 @@ class ELM327Parser {
             // Collect response lines until next request
             for (let j = currentIndex + 1; j < nextIndex; j++) {
                 const line = relevantLines[j].trim();
-                if (line && !line.startsWith('>')) {
-                    if (/^[0-9A-Fa-f]+$/.test(line)) {
-                        responseLines.push(line);
-                    }
+                if (line && !line.startsWith('>') && (/^[0-9A-Fa-f]+$/.test(line))) {
+                    responseLines.push(line);
                 }
             }
         
