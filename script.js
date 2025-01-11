@@ -261,13 +261,23 @@ class ELM327Parser {
     }
 
     parseLog(logContent) {
-        // Split content into lines
         const lines = logContent.split(/\r\n|\r|\n/);
-        
-        // First pass: find all PID requests (excluding commands)
-        const pidRequestIndices = [];
+    
+        // Find the last ATZ command
+        let startIndex = 0;
         for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
+            if (lines[i].trim().toUpperCase() === 'ATZ') {
+                startIndex = i;
+            }
+        }
+        console.log("Start Index:", startIndex); 
+        // Start parsing from the line after the last ATZ command
+        const relevantLines = lines.slice(startIndex + 1);
+    
+        // Continue with existing parsing logic using relevantLines instead of lines
+        const pidRequestIndices = [];
+        for (let i = 0; i < relevantLines.length; i++) {
+            const line = relevantLines[i].trim();
             if (this.isPIDRequest(line)) {
                 pidRequestIndices.push(i);
             }
@@ -277,17 +287,17 @@ class ELM327Parser {
         if (pidRequestIndices.length >= 2) {
             const lastPIDIndex = pidRequestIndices[pidRequestIndices.length - 1];
             const secondLastPIDIndex = pidRequestIndices[pidRequestIndices.length - 2];
-            
-            const request = lines[secondLastPIDIndex].trim().substring(1);
-            
+        
+            const request = relevantLines[secondLastPIDIndex].trim().substring(1);
+        
             const responseLines = [];
             for (let i = secondLastPIDIndex + 1; i < lastPIDIndex; i++) {
-                const line = lines[i].trim();
+                const line = relevantLines[i].trim();
                 if (line && !this.isCommand(line)) {
                     responseLines.push(line);
                 }
             }
-            
+        
             this.secondToLastPID = {
                 request: request,
                 response: this.formatResponse(responseLines)
@@ -296,16 +306,16 @@ class ELM327Parser {
 
         // Process commands (AT/ST/VT)
         let i = 0;
-        while (i < lines.length) {
-            const line = lines[i].trim();
+        while (i < relevantLines.length) {
+            const line = relevantLines[i].trim();
             if (line.startsWith('>') && this.isCommand(line)) {
                 const command = line;
                 const responseLines = [];
                 let j = i + 1;
-                
+            
                 // Collect response lines until next command or PID request
-                while (j < lines.length) {
-                    const responseLine = lines[j].trim();
+                while (j < relevantLines.length) {
+                    const responseLine = relevantLines[j].trim();
                     if (!responseLine || 
                         responseLine.startsWith('>') || 
                         responseLine.startsWith('[') ||
@@ -315,7 +325,7 @@ class ELM327Parser {
                     responseLines.push(responseLine);
                     j++;
                 }
-                
+            
                 const commandToCheck = command.substring(1);
                 if (!['ATE0', 'ATD0', 'ATH1', 'ATM0', 'ATRV', 'STI', 'ATS0'].includes(commandToCheck)) {
                     this.commands.push({
@@ -323,7 +333,7 @@ class ELM327Parser {
                         response: responseLines
                     });
                 }    
-                
+            
                 i = j;
             } else {
                 i++;
@@ -335,27 +345,26 @@ class ELM327Parser {
             const currentIndex = pidRequestIndices[i];
             const nextIndex = i < pidRequestIndices.length - 1 ? 
                             pidRequestIndices[i + 1] : 
-                            lines.length;
-            
-            const request = lines[currentIndex].trim().substring(1);
+                            relevantLines.length;
+        
+            const request = relevantLines[currentIndex].trim().substring(1);
             const responseLines = [];
-            
+        
             // Collect response lines until next request
             for (let j = currentIndex + 1; j < nextIndex; j++) {
-                const line = lines[j].trim();
+                const line = relevantLines[j].trim();
                 if (line && !line.startsWith('>')) {
                     if (/^[0-9A-Fa-f]+$/.test(line)) {
                         responseLines.push(line);
                     }
                 }
             }
-            
+        
             if (responseLines.length > 0) {
                 this.pidResponses.set(request, responseLines);
             }
         }
-    }
-    
+    }    
     getSecondToLastPID() {
         return this.secondToLastPID;
     }
