@@ -343,12 +343,16 @@ class ELM327Parser {
             // Collect response lines until next request
             for (let j = currentIndex + 1; j < nextIndex; j++) {
                 const line = lines[j].trim();
-                if (line && !line.startsWith('>') && this.isHexNumber(line.substring(1, 3))) {
-                    responseLines.push(line);
+                if (line && !line.startsWith('>')) {
+                    if (/^[0-9A-Fa-f]+$/.test(line)) {
+                        responseLines.push(line);
+                    }
                 }
             }
             
-            this.pidResponses.set(request, responseLines);
+            if (responseLines.length > 0) {
+                this.pidResponses.set(request, responseLines);
+            }
         }
     }
     
