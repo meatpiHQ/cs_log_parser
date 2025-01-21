@@ -217,6 +217,9 @@ class ELM327Parser {
         this.commands = [];
         this.pidResponses = new Map();
         this.lastProtocol = null;
+        this.lastATSH = null;
+        this.lastATFCSH = null;
+        this.lastATCRA = null;
     }
 
     isCommand(line) {
@@ -255,6 +258,22 @@ class ELM327Parser {
                 return line.substring(3);
             } else if (['7', '9'].includes(protocol)) {
                 return line.substring(8);
+            }
+            return line;
+        });
+    }
+
+    formatResponseHeader(response) {
+        const protocol = this.lastProtocol;
+        if (!protocol) {
+            return response;
+        }
+        console.log("Protocol:", protocol);
+        return response.map(line => {
+            if (['6', '8'].includes(protocol)) {
+                return line.substring(0, 3);
+            } else if (['7', '9'].includes(protocol)) {
+                return line.substring(0, 8);
             }
             return line;
         });
@@ -301,44 +320,59 @@ class ELM327Parser {
         
             this.secondToLastPID = {
                 request: request,
-                response: this.formatResponse(responseLines)
+                response: this.formatResponse(responseLines),
+                header: this.formatResponseHeader(responseLines)
             };
         }
-
-        // Process commands (AT/ST/VT)
-        let i = 0;
-        while (i < relevantLines.length) {
-            const line = relevantLines[i].trim();
-            if (line.startsWith('>') && this.isCommand(line)) {
-                const command = line;
-                const responseLines = [];
-                let j = i + 1;
-            
-                // Collect response lines until next command or PID request
-                while (j < relevantLines.length) {
-                    const responseLine = relevantLines[j].trim();
-                    if (!responseLine || 
-                        responseLine.startsWith('>') || 
-                        responseLine.startsWith('[') ||
-                        responseLine === 'Initialize(initMode=Default)') {
-                        break;
-                    }
-                    responseLines.push(responseLine);
-                    j++;
-                }
-            
-                const commandToCheck = command.substring(1);
-                if (!['ATE0', 'ATD0', 'ATH1', 'ATM0', 'ATRV', 'STI', 'ATS0'].includes(commandToCheck)) {
-                    this.commands.push({
-                        command: commandToCheck,
-                        response: responseLines
-                    });
-                }    
-            
-                i = j;
-            } else {
-                i++;
-            }
+          // Process commands (AT/ST/VT)
+          let i = 0;
+          while (i < relevantLines.length) {
+              const line = relevantLines[i].trim();
+              if (line.startsWith('>') && this.isCommand(line)) {
+                  const command = line;
+                  const responseLines = [];
+                  let j = i + 1;
+                
+                  // Collect response lines until next command or PID request
+                  while (j < relevantLines.length) {
+                      const responseLine = relevantLines[j].trim();
+                      if (!responseLine || 
+                          responseLine.startsWith('>') || 
+                          responseLine.startsWith('[') ||
+                          responseLine === 'Initialize(initMode=Default)') {
+                          break;
+                      }
+                      responseLines.push(responseLine);
+                      j++;
+                  }
+                
+                  const commandToCheck = command.substring(1);
+                  if (commandToCheck.startsWith('ATSH')) {
+                      this.lastATSH = {
+                          command: commandToCheck,
+                          response: responseLines
+                      };
+                  } else if (commandToCheck.startsWith('ATFCSH')) {
+                      this.lastATFCSH = {
+                          command: commandToCheck,
+                          response: responseLines
+                      };
+                  } else if (commandToCheck.startsWith('ATCRA')) {
+                      this.lastATCRA = {
+                          command: commandToCheck,
+                          response: responseLines
+                      };
+                  } else if (!['ATE0', 'ATD0', 'ATH1', 'ATM0', 'ATRV', 'STI', 'ATS0'].includes(commandToCheck)) {
+                      this.commands.push({
+                          command: commandToCheck,
+                          response: responseLines
+                      });
+                  }    
+                
+                  i = j;
+              } else {
+                  i++;
+              }
         }
 
         // Process all PIDs and their responses
@@ -378,8 +412,19 @@ class ELM327Parser {
             response
         }));
     }
-}
-async function handleFileUpload() {
+
+    getLastATSH() {
+        return this.lastATSH;
+    }
+    
+    getLastATFCSH() {
+        return this.lastATFCSH;
+    }
+    
+    getLastATCRA() {
+        return this.lastATCRA;
+    }
+}async function handleFileUpload() {
     const fileInput = document.getElementById('logFile');
     const loadingDiv = document.getElementById('loading');
     const errorDiv = document.getElementById('error');
@@ -458,10 +503,19 @@ async function handleFileUpload() {
         // Display results
         document.getElementById('lastPID').textContent = 
             formatJSON(parser.getSecondToLastPID());
-        
+
+        document.getElementById('lastATSH').textContent = 
+            formatJSON(parser.getLastATSH());
+
+        document.getElementById('lastATFCSH').textContent = 
+            formatJSON(parser.getLastATFCSH());
+
+        document.getElementById('lastATCRA').textContent = 
+            formatJSON(parser.getLastATCRA());
+
         document.getElementById('commands').textContent = 
             formatJSON(parser.getCommands());
-        
+
         document.getElementById('allPIDs').textContent = 
             formatJSON(parser.getAllPIDResponses());
 

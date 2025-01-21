@@ -25,23 +25,36 @@
             </div>
         </div>
     </div>
-
-    <div class="results-container">
-        <div class="result-box">
-            <h3>Second-to-Last PID Request</h3>
-            <pre><code id="lastPID"></code></pre>
-            <div id="byteDisplay" class="byte-display"></div>
-        </div>
-        <div class="result-box">
-            <h3>Commands (AT/ST/VT)</h3>
-            <pre><code id="commands"></code></pre>
-        </div>
-        <div class="result-box">
-            <h3>All PID Responses</h3>
-            <pre><code id="allPIDs"></code></pre>
-        </div>
-    </div>
-
+      <div class="results-container">
+          <div class="result-box">
+              <h3>Second-to-Last PID Request</h3>
+              <pre><code id="lastPID"></code></pre>
+              <div id="byteDisplay" class="byte-display"></div>
+          </div>
+          <div class="result-box">
+              <h3>Last Commands</h3>
+              <div class="last-command">
+                  <h4>ATSH:</h4>
+                  <pre><code id="lastATSH"></code></pre>
+              </div>
+              <div class="last-command">
+                  <h4>ATFCSH:</h4>
+                  <pre><code id="lastATFCSH"></code></pre>
+              </div>
+              <div class="last-command">
+                  <h4>ATCRA:</h4>
+                  <pre><code id="lastATCRA"></code></pre>
+              </div>
+          </div>
+          <div class="result-box">
+              <h3>Commands (AT/ST/VT)</h3>
+              <pre><code id="commands"></code></pre>
+          </div>
+          <div class="result-box">
+              <h3>All PID Responses</h3>
+              <pre><code id="allPIDs"></code></pre>
+          </div>
+      </div>
     <script src="script.js"></script>
 </body>
 </html>
